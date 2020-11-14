@@ -1,56 +1,111 @@
 # **Finding Lane Lines on the Road** 
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-<img src="examples/laneLines_thirdPass.jpg" width="480" alt="Combined Image" />
 
-Overview
+## Introduction
+
+This is the first project submission for Udacity - Self Driving Car NanoDegree.
+
+The structures of the submission are as follows:
+
+* **P1.ipynb** is the notebook that contains the codes and visualizations.
+* **test_images_output** and **test_videos_output** are the folders that contain the images and videos output
+
 ---
 
-When we drive, we use our eyes to decide where to go.  The lines on the road that show us where the lanes are act as our constant reference for where to steer the vehicle.  Naturally, one of the first things we would like to do in developing a self-driving car is to automatically detect lane lines using an algorithm.
+### Reflection
 
-In this project you will detect lane lines in images using Python and OpenCV.  OpenCV means "Open-Source Computer Vision", which is a package that has many useful tools for analyzing images.  
+### 1. Pipelines
 
-To complete the project, two files will be submitted: a file containing project code and a file containing a brief write up explaining your solution. We have included template files to be used both for the [code](https://github.com/udacity/CarND-LaneLines-P1/blob/master/P1.ipynb) and the [writeup](https://github.com/udacity/CarND-LaneLines-P1/blob/master/writeup_template.md).The code file is called P1.ipynb and the writeup template is writeup_template.md 
+My pipeline consisted of 5 steps
 
-To meet specifications in the project, take a look at the requirements in the [project rubric](https://review.udacity.com/#!/rubrics/322/view)
+#### Step 1
+
+Image is read using matplotlib `imread` function and converted to gray using opencv `cvtColor`. 
+The reason of converting to gray is to make certain color more contrast such as white on the
+surface of dark colored road. 
+
+After that, the image is blurred using a `GaussianBlur` to remove
+noises that might reduce our next step of detecting the edges. The kernel size of the `GaussianBlur`
+is also tuned to be not too high and not too low. If it's too low some noises might still present but
+if it's too high some details might be missing.
+
+#### Step 2
+
+Step 2 is to detect the edges from the image from step 1, 
+`canny` edge detection is used with lower threshold of 50 
+and high threshold of 150.
+
+#### Step 3
+
+In step 3, the region of interest is created, the idea here is the lane is located
+at half bottom of the image and also roughly the shape of triangle. 
+Four vertices of polygon is used here instead of triangle to closely resemble the shape of road. 
+Following is the example of the vertices drawn on the image.
+
+![alt text](report_images/roi.jpg)
+
+The vertices is then used to mask with edges found from step 2. 
+The masked edges is the area of our interest for next step.
+
+![alt text](report_images/masked_edges.jpg)
+
+#### Step 4
+
+In this step, `HoughLinesP` is used to detect lines from the masked edges. I spent my time in the
+step to tune the rho, threshold, min_line_length and max_line_gap parameters to find the best 
+fitting, however the tuning is done manually and not exhaustive and may not have the globally
+best value but it's good enough to detect the lines.
+
+#### Step 5
+
+This step mainly about drawing the detected lines onto the original image. Most of the time were spent
+here to basically filter outliers before averaging, detecting the left and right 
+lines and extrapolating it.
+
+The outliers is noticed only when drawing the lines over video. Some of the detected lines such bad
+shape from the lane mark are removed otherwise it will impact the average values and the line 
+are drawn incorrectly such the following:
+
+![alt text](report_images/line-incorrect.png)
+
+The way I determine the outliers is through collecting all the line gradients when
+testing on the videos and use the interquantile method to find the range. 
+
+The range of gradient values for left lines
+
+![alt text](report_images/boxplot-left.png)
+
+The range of gradient values for right lines
+
+![alt text](report_images/boxplot-right.png)
+
+After the outliers were removed, the gradient and y-intercept are then averaged out and coordinates
+are computed from arranging the formula y=mx+c, 
+where m is the gradient and c is the y intercept. We will get four coordinates in which 2
+for left line and another 2 for the right lines.
+
+These lines are then drawn into the image by using opencv `line` function and thickness is also
+increased to 13 to make the line appear more visibly.
 
 
-Creating a Great Writeup
----
-For this project, a great writeup should provide a detailed response to the "Reflection" section of the [project rubric](https://review.udacity.com/#!/rubrics/322/view). There are three parts to the reflection:
 
-1. Describe the pipeline
+### 2. Identify potential shortcomings with your current pipeline
 
-2. Identify any shortcomings
+The shortcomings that I encountered or notice are the lane detection depend on handcrafted
+technique, untested on more images such as during night or raining, 
+depends on the visible marking lines
 
-3. Suggest possible improvements
+Because it's a handcrafted technique whereby lots parameters are hand tune
+and is tested only on small sample of images, this pipeline might
+not be able to work on general cases. 
 
-We encourage using images in your writeup to demonstrate how your pipeline works.  
-
-All that said, please be concise!  We're not looking for you to write a book here: just a brief description.
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup. Here is a link to a [writeup template file](https://github.com/udacity/CarND-LaneLines-P1/blob/master/writeup_template.md). 
+Furthermore, because of it's only detecting visible lines on the road, if the road doesn't
+have marking such as in non-urban area then this pipeline is definitely won't work.
 
 
-The Project
----
 
-## If you have already installed the [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) you should be good to go!   If not, you should install the starter kit to get started on this project. ##
+### 3. Suggest possible improvements to your pipeline
 
-**Step 1:** Set up the [CarND Term1 Starter Kit](https://classroom.udacity.com/nanodegrees/nd013/parts/fbf77062-5703-404e-b60c-95b78b2f3f9e/modules/83ec35ee-1e02-48a5-bdb7-d244bd47c2dc/lessons/8c82408b-a217-4d09-b81d-1bda4c6380ef/concepts/4f1870e0-3849-43e4-b670-12e6f2d4b7a7) if you haven't already.
-
-**Step 2:** Open the code in a Jupyter Notebook
-
-You will complete the project code in a Jupyter notebook.  If you are unfamiliar with Jupyter Notebooks, check out <A HREF="https://www.packtpub.com/books/content/basics-jupyter-notebook-and-python" target="_blank">Cyrille Rossant's Basics of Jupyter Notebook and Python</A> to get started.
-
-Jupyter is an Ipython notebook where you can run blocks of code and see results interactively.  All the code for this project is contained in a Jupyter notebook. To start Jupyter in your browser, use terminal to navigate to your project directory and then run the following command at the terminal prompt (be sure you've activated your Python 3 carnd-term1 environment as described in the [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) installation instructions!):
-
-`> jupyter notebook`
-
-A browser window will appear showing the contents of the current directory.  Click on the file called "P1.ipynb".  Another browser window will appear displaying the notebook.  Follow the instructions in the notebook to complete the project.  
-
-**Step 3:** Complete the project and submit both the Ipython notebook and the project writeup
-
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
+Possible improvements might be to detect the curve lines and sharp turns and also to reduce jiggling when the
+image move from frame to frame. Deep learning might be one of the possible solutions
