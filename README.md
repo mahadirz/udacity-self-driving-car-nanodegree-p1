@@ -63,49 +63,48 @@ This step mainly about drawing the detected lines onto the original image. Most 
 here to basically filter outliers before averaging, detecting the left and right 
 lines and extrapolating it.
 
-The outliers is noticed only when drawing the lines over video. Some of the detected lines such bad
+The outliers is noticed only when drawing the lines over video. Some of the detected lines such as from bad
 shape from the lane mark are removed otherwise it will impact the average values and the line 
-are drawn incorrectly such the following:
+are drawn incorrectly such as what happened to the following section of the video:
 
 ![alt text](report_images/line-incorrect.png)
 
-The way I determine the outliers is through collecting all the line gradients when
-testing on the videos and use the interquantile method to find the range. 
+The method I used to determine the outliers is through collecting all the line gradients throughout the image sample from videos and use the interquantile method to find the normal range. 
 
-The range of gradient values for left lines
+The boxplot shown is the range of gradient values for left lines
 
 ![alt text](report_images/boxplot-left.png)
 
-The range of gradient values for right lines
+The boxplot shown is the range of gradient values for right lines
 
 ![alt text](report_images/boxplot-right.png)
 
-After the outliers were removed, the gradient and y-intercept are then averaged out and coordinates
-are computed from arranging the formula y=mx+c, 
+After the outliers are removed, the gradient and y-intercept are then averaged out and coordinates
+can be computed from arranging the formula y=mx+c, 
 where m is the gradient and c is the y intercept. We will get four coordinates in which 2
 for left line and another 2 for the right lines.
 
 These lines are then drawn into the image by using opencv `line` function and thickness is also
-increased to 13 to make the line appear more visibly.
+increased to 13 to make the line more visible.
 
 
 
 ### 2. Identify potential shortcomings with your current pipeline
 
-The shortcomings that I encountered or notice are the lane detection depend on handcrafted
+The shortcomings that I can think of are the lane detection depends on handcrafted
 technique, untested on more images such as during night or raining, 
-depends on the visible marking lines
+and it depends on the visible marking lines,
 
-Because it's a handcrafted technique whereby lots parameters are hand tune
-and is tested only on small sample of images, this pipeline might
+Because it's a handcrafted technique whereby lots parameters are hand tuned
+and only tested on small sample of images, this pipeline might
 not be able to work on general cases. 
 
-Furthermore, because of it's only detecting visible lines on the road, if the road doesn't
-have marking such as in non-urban area then this pipeline is definitely won't work.
+Furthermore, due to the detection depend on marking that is  on the road, if the road doesn't
+have marking such as in non-urban area then this pipeline is definitely would not work.
 
 
 
 ### 3. Suggest possible improvements to your pipeline
 
 Possible improvements might be to detect the curve lines and sharp turns and also to reduce jiggling when the
-image move from frame to frame. Deep learning might be one of the possible solutions
+image move from frame to frame. Deep learning might be one of the possible solutions.
